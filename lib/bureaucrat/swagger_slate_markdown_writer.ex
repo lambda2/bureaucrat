@@ -176,6 +176,11 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
     "[#{type}](##{String.downcase(type)})"
   end
 
+  # Convert a schema reference eg, #/definitions/User to a markdown link
+  def schema_type_to_link(%{"type" => type, "items" => ${"$ref" => ref}}) do
+    "#{type}(" <> schema_ref_to_link(ref) <> ")"
+  end
+
   @doc """
   Populate each test record with private.swagger_tag and private.operation_id from swagger.
   """
@@ -300,7 +305,13 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
 
     Enum.each swagger_operation["responses"], fn {status, response} ->
       ref = get_in response, ["schema", "$ref"]
-      schema = if ref, do: schema_ref_to_link(ref), else: ""
+      schema = if ref do
+        schema_ref_to_link(ref)
+      else
+        rtype = get_in response, ["schema", "type"]
+        ref =  get_in(response, ["schema", "items", "ref"]
+        if rtype && ref do: schema_type_to_link(get_in response, ["schema"]), else: ""
+      end
       puts(file, "|#{status} | #{response["description"]} | #{schema}|")
     end
   end
