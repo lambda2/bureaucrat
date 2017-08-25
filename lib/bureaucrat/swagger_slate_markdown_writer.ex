@@ -177,7 +177,7 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
   end
 
   # Convert a schema reference eg, #/definitions/User to a markdown link
-  def schema_type_to_link(%{"type" => type, "items" => ${"$ref" => ref}}) do
+  def schema_type_to_link(%{"type" => type, "items" => %{"$ref" => ref}}) do
     "#{type}(" <> schema_ref_to_link(ref) <> ")"
   end
 
@@ -309,8 +309,9 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
         schema_ref_to_link(ref)
       else
         rtype = get_in response, ["schema", "type"]
-        ref =  get_in(response, ["schema", "items", "ref"]
-        if rtype && ref do: schema_type_to_link(get_in response, ["schema"]), else: ""
+        ref =  get_in response, ["schema", "items", "ref"]
+        if (rtype && ref), do: schema_type_to_link(get_in response, ["schema"]), else: ""
+
       end
       puts(file, "|#{status} | #{response["description"]} | #{schema}|")
     end
