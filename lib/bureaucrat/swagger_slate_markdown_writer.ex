@@ -309,7 +309,7 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
         schema_ref_to_link(ref)
       else
         rtype = get_in response, ["schema", "type"]
-        ref =  get_in response, ["schema", "items", "ref"]
+        ref =  get_in response, ["schema", "items", "$ref"]
         if (rtype && ref), do: schema_type_to_link(get_in response, ["schema"]), else: ""
 
       end
