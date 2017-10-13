@@ -5,11 +5,22 @@ It requires that the decoded swagger data be available via Application.get_env(:
 eg by passing it as an option to the Bureaucrat.start/1 function.
 """
 
+  alias Bureaucrat.Languages.Curl
+  alias Bureaucrat.Languages.Ruby
+
+  @languages [Curl, Ruby]
+
   alias Plug.Conn
 
   # pipeline-able puts
   defp puts(file, string) do
     IO.puts(file, string)
+    file
+  end
+
+  # pipeline-able puts
+  defp iputs(file, string) do
+    IO.write(file, string)
     file
   end
 
@@ -42,6 +53,10 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
   This corresponds to the info section of the swagger document.
   """
   def write_overview(file, swagger) do
+    langs = @languages |> Enum.map(fn (l) ->
+      l.to_language_tab
+    end) |> Enum.join("\n")
+
     info = swagger["info"]
     file
     |> puts("""
@@ -51,6 +66,11 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
     search: true
     includes:
       - intro.md
+
+    language_tabs:
+      - http: request
+    #{langs}
+
     ---
 
     # #{info["title"]}
@@ -342,8 +362,8 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
     # Request with path and headers
     file
     |> puts("> #{record.assigns.bureaucrat_desc}\n")
-    |> puts("```plaintext")
-    |> puts("#{record.method} #{path}")
+    |> puts("```http")
+    |> puts("#{record.method} #{path} HTTP/1.0")
     |> write_headers(record.req_headers)
     |> puts("```\n")
 
@@ -354,6 +374,11 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
       |> puts("#{Poison.encode!(record.body_params, pretty: true)}")
       |> puts("```\n")
     end
+
+    langs = @languages |> Enum.map(fn (l) ->
+      l.example_request(file, record)
+    end)
+
 
     # Response with status and headers
     file
