@@ -49,6 +49,8 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
     title: #{info["title"]}
 
     search: true
+    includes:
+      - intro.md
     ---
 
     # #{info["title"]}
@@ -105,8 +107,8 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
     |> puts("## #{name}\n")
     |> puts("#{model_schema["description"]}")
     |> write_model_example(model_schema)
-    |> puts("|Property|Description|Type|Required|")
-    |> puts("|--------|-----------|----|--------|")
+    |> puts("|Property|Description|Type|")
+    |> puts("|--------|-----------|----|")
     |> write_model_properties(swagger, model_schema)
     |> puts("")
   end
@@ -165,7 +167,7 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
   end
 
   def write_model_property(file, _swagger, property, property_details, type, required?) do
-    puts(file, "|#{property}|#{property_details["description"]}|#{type}|#{required?}|")
+    puts(file, "|#{property}|#{property_details["description"]}|#{type}|")
   end
 
   defp is_required(property, %{"required" => required}), do: property in required
@@ -244,6 +246,11 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
     # write examples before params/schemas to get correct alignment in slate
     Enum.each(records, &(write_example(file, &1)))
 
+    IO.inspect(operation_id)
+    IO.inspect(details)
+    # %{"parameters" => params} = details
+    # IO.puts("[WRITE] paramters = #{inspect(params)}")
+
     file
     |> puts("#{details["description"]}\n")
     |> write_parameters(details)
@@ -268,15 +275,21 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
   Uses the vendor extension "x-example" to provide example of each parameter.
   TODO: detailed schema validation rules aren't shown yet (min/max/regex/etc...)
   """
-  def write_parameters(file, _ = %{"parameters" => params}) when map_size(params) > 0 do
+  def write_parameters(file, _ = %{"parameters" => params}) when length(params) > 0 do
     file
     |> puts("#### Parameters\n")
-    |> puts("| Parameter   | Description | In |Type      | Required | Default | Example |")
-    |> puts("|-------------|-------------|----|----------|----------|---------|---------|")
+    |> puts("| Parameter   | Description  |Type       | Example |")
+    |> puts("|-------------|--------------|-----------|---------|")
+
+    # file
+    # |> puts("#### Parameters\n")
+    # |> puts("| Parameter   | Description | In |Type      | Required | Default | Example |")
+    # |> puts("|-------------|-------------|----|----------|----------|---------|---------|")
 
     Enum.each params, fn param ->
+      # ["name", "description", "in", "type", "required", "default", "x-example"]
       content =
-        ["name", "description", "in", "type", "required", "default", "x-example"]
+        ["name", "description", "type", "x-example"]
         |> Enum.map(&(param[&1]))
         |> Enum.map(&encode_parameter_table_cell/1)
         |> Enum.join("|")
