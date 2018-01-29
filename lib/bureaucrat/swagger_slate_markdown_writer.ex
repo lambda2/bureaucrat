@@ -32,18 +32,26 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
   """
   def write(records, path) do
     {:ok, file} = File.open path, [:write, :utf8]
+
+    models_path = path |> String.replace("index.html", "includes/_models")
+    {:ok, models_file} = File.open models_path, [:write, :utf8]
+
+    reference_path = path |> String.replace("index.html", "includes/_reference")
+    {:ok, reference_file} = File.open reference_path, [:write, :utf8]
+
     swagger = Application.get_env(:bureaucrat, :swagger)
 
     file
     |> write_overview(swagger)
     |> write_authentication(swagger)
-    |> write_models(swagger)
+
+    models_file |> write_models(swagger)
 
     records
       |> tag_records(swagger)
       |> group_records()
       |> Enum.each(fn {tag, records_by_operation_id} ->
-           write_operations_for_tag(file, tag, records_by_operation_id, swagger)
+           write_operations_for_tag(reference_file, tag, records_by_operation_id, swagger)
          end)
   end
 
@@ -66,6 +74,8 @@ eg by passing it as an option to the Bureaucrat.start/1 function.
     search: true
     includes:
       - intro.md
+      - models.md
+      - reference.md
 
     language_tabs:
       - http: request
